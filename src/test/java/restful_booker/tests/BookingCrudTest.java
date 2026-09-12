@@ -14,11 +14,8 @@ import restful_booker.models.Booking;
 import restful_booker.models.CreateBookingResponse;
 
 import static io.restassured.RestAssured.given;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static restful_booker.config.RestfulBookerSpecifications.jsonRequest;
 import static restful_booker.config.RestfulBookerSpecifications.jsonResponse;
 import static restful_booker.testdata.BookingTestData.adminCredentials;
@@ -54,10 +51,14 @@ class BookingCrudTest {
                 .extract()
                 .as(CreateBookingResponse.class);
 
-        assertAll(
-                () -> assertTrue(createdBooking.bookingId() > 0, "The API should return a positive booking ID"),
-                () -> assertEquals(originalBooking, createdBooking.booking())
-        );
+        assertSoftly(softly -> {
+            softly.assertThat(createdBooking.bookingId())
+                    .as("generated booking ID")
+                    .isPositive();
+            softly.assertThat(createdBooking.booking())
+                    .as("created booking")
+                    .isEqualTo(originalBooking);
+        });
 
         bookingId = createdBooking.bookingId();
     }
@@ -67,7 +68,9 @@ class BookingCrudTest {
     void getBookingReturnsCreatedBooking() {
         Booking retrievedBooking = getBooking(requireBookingId());
 
-        assertEquals(originalBooking, retrievedBooking);
+        assertThat(retrievedBooking)
+                .as("retrieved booking")
+                .isEqualTo(originalBooking);
     }
 
     @Test
@@ -75,8 +78,9 @@ class BookingCrudTest {
     void authenticateReturnsReusableToken() {
         AuthResponse authResponse = authenticate();
 
-        assertNotNull(authResponse.token(), "The authentication response should contain a token");
-        assertFalse(authResponse.token().isBlank(), "The authentication token should not be blank");
+        assertThat(authResponse.token())
+                .as("authentication token")
+                .isNotBlank();
         authToken = authResponse.token();
     }
 
@@ -98,8 +102,12 @@ class BookingCrudTest {
                 .extract()
                 .as(Booking.class);
 
-        assertEquals(updatedBooking, updateResponse);
-        assertEquals(updatedBooking, getBooking(id), "A follow-up GET should return the persisted update");
+        assertThat(updateResponse)
+                .as("updated booking response")
+                .isEqualTo(updatedBooking);
+        assertThat(getBooking(id))
+                .as("booking returned by the follow-up GET")
+                .isEqualTo(updatedBooking);
     }
 
     @Test
@@ -188,13 +196,16 @@ class BookingCrudTest {
     }
 
     private int requireBookingId() {
-        assertNotNull(bookingId, "Create booking must succeed before this test runs");
+        assertThat(bookingId)
+                .as("booking ID from the create test")
+                .isNotNull();
         return bookingId;
     }
 
     private String requireAuthToken() {
-        assertNotNull(authToken, "Authentication must succeed before this test runs");
-        assertFalse(authToken.isBlank(), "Authentication token should not be blank");
+        assertThat(authToken)
+                .as("authentication token from the auth test")
+                .isNotBlank();
         return authToken;
     }
 }
