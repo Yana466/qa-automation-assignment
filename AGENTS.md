@@ -18,6 +18,7 @@ GraphQL API tests for  https://eu-central-1-shared-euc1-02.cdn.hygraph.com/conte
 Project files are located here `src/test/java/graphql_playground`
 
 ## Development conventions
+- Use AssertJ for asserts
 - Keep test scenarios in `tests` packages and UI interactions/selectors in `pages` page-object classes. Do not put page-object behavior directly into test classes unless the example specifically demonstrates that approach.
 - Prefer stable, user-facing locators and clear assertions. Keep changes focused on the current example/module and follow the existing Java naming and package conventions.
 
