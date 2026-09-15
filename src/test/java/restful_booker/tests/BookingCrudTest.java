@@ -1,8 +1,6 @@
 package restful_booker.tests;
 
 import io.restassured.RestAssured;
-import io.restassured.response.Response;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
@@ -30,7 +28,6 @@ class BookingCrudTest {
 
     private Integer bookingId;
     private String authToken;
-    private boolean bookingDeleted;
 
     @BeforeAll
     void enableFailureLogging() {
@@ -130,44 +127,6 @@ class BookingCrudTest {
                 .then()
                 .statusCode(404);
 
-        bookingDeleted = true;
-    }
-
-    @AfterAll
-    void cleanUpCreatedBooking() {
-        try {
-            if (bookingId == null || bookingDeleted) {
-                return;
-            }
-
-            String cleanupToken = authToken;
-            if (cleanupToken == null || cleanupToken.isBlank()) {
-                cleanupToken = authenticate().token();
-            }
-
-            if (cleanupToken == null || cleanupToken.isBlank()) {
-                System.err.println("Cleanup skipped because no authentication token was available.");
-                return;
-            }
-
-            Response cleanupResponse = given()
-                    .spec(jsonRequest())
-                    .cookie("token", cleanupToken)
-                    .when()
-                    .delete("/booking/{id}", bookingId);
-
-            if (cleanupResponse.statusCode() != 201 && cleanupResponse.statusCode() != 404) {
-                System.err.printf(
-                        "Cleanup failed for booking %d: HTTP %d%n",
-                        bookingId,
-                        cleanupResponse.statusCode()
-                );
-            }
-        } catch (RuntimeException exception) {
-            System.err.printf("Cleanup failed for booking %s: %s%n", bookingId, exception.getMessage());
-        } finally {
-            RestAssured.reset();
-        }
     }
 
     private AuthResponse authenticate() {
